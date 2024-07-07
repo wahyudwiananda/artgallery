@@ -274,11 +274,7 @@ const ImageGallery = () => {
       <Container className="main-footer">
         <Row className="text-center">
           <p className="mt-3">
-            ©2024 Copyright <strong className="text-danger">Medien de Azalea</strong> by{" "}
-            <a href="https://www.instagram.com/wahyuananda_05/" target="blank">
-              Wahyu Dwi Ananda
-            </a>
-            . All Rights Reserved
+            ©2024 Copyright <strong className="text-danger">Medien de Azalea</strong>. All Rights Reserved
           </p>
         </Row>
       </Container>
