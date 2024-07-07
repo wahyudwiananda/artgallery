@@ -2,6 +2,7 @@ body {
   background-image: url("https://png.pngtree.com/background/20220724/original/pngtree-background-estetik-polos-untuk-latar-foto-picture-image_1739284.jpg");
   background-size: 100%;
   opacity: 0.8;
+  background-attachment: fixed;
 }
 
 body::-webkit-scrollbar {

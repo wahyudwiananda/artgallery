@@ -1,0 +1,15 @@
+.colored-text span:nth-child(1) {
+  color: navy;
+}
+
+.colored-text span:nth-child(2) {
+  color: gold;
+}
+
+.colored-text span:nth-child(3) {
+  color: hotpink;
+}
+
+.sub-title {
+  color: rgb(114, 67, 10);
+}
