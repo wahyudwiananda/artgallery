@@ -137,6 +137,10 @@ const ImageGallery = () => {
     }
   };
 
+  const reloadPage = () => {
+    window.location.reload();
+  };
+
   return (
     <div>
       <Navbar expand="lg">
@@ -148,7 +152,7 @@ const ImageGallery = () => {
             <Form.Control type="text" placeholder="Search here..." value={searchTerm} onChange={handleSearchChange} />
           </Form>
           <>
-            <Button variant="outline-success" onClick={handleShow}>
+            <Button variant="outline-dark" onClick={handleShow}>
               {"Admin "}
               <i className="bi bi-list"></i>
             </Button>
@@ -160,8 +164,8 @@ const ImageGallery = () => {
                 {!accessGranted && (
                   <div>
                     <Form.Control type="password" value={accessKey} onChange={handleAccessKeyChange} placeholder="Enter access key" className="mb-2" />
-                    <Button onClick={handleAccessSubmit} className="text-end">
-                      Enter
+                    <Button onClick={handleAccessSubmit} className="text-end" variant="success">
+                      Sign In
                     </Button>
                   </div>
                 )}
@@ -175,6 +179,9 @@ const ImageGallery = () => {
                     <Form.Control type="file" accept={`${mediaType}/*`} onChange={handleFileChange} className="mb-2" />
                     <Form.Control type="text" onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
                     <Button onClick={uploadMedia}>Upload Media</Button>
+                    <Button onClick={reloadPage} variant="danger" style={{ marginLeft: "10px" }}>
+                      Sign Out
+                    </Button>
                   </div>
                 )}
               </Offcanvas.Body>
@@ -264,7 +271,7 @@ const ImageGallery = () => {
                         <div>
                           {editMode && editMediaId === media.id ? (
                             <div>
-                              <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" />
+                              <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
                               <Button onClick={uploadMedia} variant="success">
                                 <i className="bi bi-floppy-fill"></i> Save
                               </Button>
@@ -299,7 +306,7 @@ const ImageGallery = () => {
                         <div>
                           {editMode && editMediaId === media.id ? (
                             <div>
-                              <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" />
+                              <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
                               <Button onClick={uploadMedia} variant="success">
                                 <i className="bi bi-floppy-fill"></i> Save
                               </Button>
