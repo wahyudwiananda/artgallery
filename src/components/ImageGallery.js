@@ -109,6 +109,7 @@ const ImageGallery = () => {
       setNewMedia(null);
       setDescription("");
       loadMedia();
+      alert("Upload Success!");
     } catch (error) {
       console.error("Error uploading media:", error);
     }
