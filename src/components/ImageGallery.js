@@ -144,7 +144,7 @@ const ImageGallery = () => {
 
   return (
     <div>
-      <Navbar expand="lg">
+      <Navbar expand="lg" fixed="top" bg="light" style={{ height: "60px" }}>
         <Container>
           <Navbar.Brand className="text-black" href="#home">
             Classic Art Gallery
@@ -153,7 +153,7 @@ const ImageGallery = () => {
             <Form.Control type="text" placeholder="Search here..." value={searchTerm} onChange={handleSearchChange} />
           </Form>
           <>
-            <Button variant="outline-dark" onClick={handleShow}>
+            <Button variant="outline-success" onClick={handleShow}>
               {"Admin "}
               <i className="bi bi-list"></i>
             </Button>
@@ -190,7 +190,7 @@ const ImageGallery = () => {
           </>
         </Container>
       </Navbar>
-      <Container className="text-center" style={{ marginTop: "100px", marginBottom: "100px", maxWidth: "600px" }}>
+      <Container className="text-center" style={{ marginTop: "200px", marginBottom: "100px", maxWidth: "600px" }}>
         <h1 className="colored-text">
           <span>Medien</span> <span>de</span> <span>Azalea</span>
         </h1>
