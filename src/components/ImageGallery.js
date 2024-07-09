@@ -14,11 +14,14 @@ const ImageGallery = () => {
   const [accessKey, setAccessKey] = useState("");
   const [accessGranted, setAccessGranted] = useState(false);
   const [show, setShow] = useState(false);
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [searchEmpty, setSearchEmpty] = useState(false); // State untuk menandai pencarian kosong
+  const [searchEmpty, setSearchEmpty] = useState(false);
+  const [selectedMediaType, setSelectedMediaType] = useState("all");
+  const [selectedFilter, setSelectedFilter] = useState("all");
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
   const handleSearchChange = async (event) => {
     const term = event.target.value;
@@ -142,6 +145,19 @@ const ImageGallery = () => {
     window.location.reload();
   };
 
+  const filterMediaByType = (type) => {
+    setSelectedMediaType(type);
+    setSelectedFilter(type);
+  };
+
+  let displayedMedia = [];
+
+  if (searchTerm !== "") {
+    displayedMedia = searchResults.filter((media) => selectedMediaType === "all" || media.type === selectedMediaType);
+  } else {
+    displayedMedia = mediaList.filter((media) => selectedMediaType === "all" || media.type === selectedMediaType);
+  }
+
   return (
     <div>
       <Navbar expand="lg" fixed="top" bg="light" style={{ height: "60px" }}>
@@ -177,7 +193,7 @@ const ImageGallery = () => {
                       <option value="video">Video</option>
                       <option value="audio">Audio</option>
                     </Form.Select>
-                    <Form.Control type="file" accept={`${mediaType}/*`} onChange={handleFileChange} className="mb-2" />
+                    <Form.Control type="file" accept={mediaType} onChange={handleFileChange} className="mb-2" />
                     <Form.Control type="text" onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
                     <Button onClick={uploadMedia}>Upload Media</Button>
                     <Button onClick={reloadPage} variant="danger" style={{ marginLeft: "10px" }}>
@@ -190,7 +206,7 @@ const ImageGallery = () => {
           </>
         </Container>
       </Navbar>
-      <Container className="text-center" style={{ marginTop: "200px", marginBottom: "100px", maxWidth: "600px" }}>
+      <Container data-aos="fade-down" className="text-center" style={{ marginTop: "200px", marginBottom: "100px", maxWidth: "600px" }}>
         <h1 className="colored-text">
           <span>Medien</span> <span>de</span> <span>Azalea</span>
         </h1>
@@ -198,150 +214,139 @@ const ImageGallery = () => {
         <p>Rediscover the essence of timeless classics, where every artwork, musical note, and cinematic moment invites you to explore, reflect, and appreciate the enduring beauty of human creativity.</p>
         <hr />
       </Container>
+      <Container data-aos="fade" className="text-center mb-5">
+        <Button className="me-2" variant={selectedFilter === "all" ? "secondary" : "outline-secondary"} onClick={() => filterMediaByType("all")}>
+          All
+        </Button>
+        <Button className="me-2" variant={selectedFilter === "image" ? "primary" : "outline-primary"} onClick={() => filterMediaByType("image")}>
+          Painting
+        </Button>
+        <Button className="me-2" variant={selectedFilter === "video" ? "success" : "outline-success"} onClick={() => filterMediaByType("video")}>
+          Video
+        </Button>
+        <Button className="me-2" variant={selectedFilter === "audio" ? "danger" : "outline-danger"} onClick={() => filterMediaByType("audio")}>
+          Music
+        </Button>
+      </Container>
       <Container>
         {searchTerm !== "" && <h4 className="text-center mb-4">{searchEmpty ? "Sorry, we don't have that..." : "Search Results:"}</h4>}
         <Row xs={1} md={3} className="g-4" style={{ margin: "auto" }}>
-          {searchResults.map((media) => (
-            <Col key={media.id} style={{ margin: "auto", padding: "20px" }}>
-              <Card style={{ width: "20rem", margin: "auto" }}>
-                {media.type === "image" && <Card.Img variant="top" src={media.data} alt={media.description} />}
-                {media.type === "video" && (
+          {displayedMedia.map((media) => (
+            <Col data-aos="fade-up" key={media.id} style={{ margin: "auto", padding: "20px" }}>
+              {media.type === "image" && (
+                <Card style={{ width: "20rem", margin: "auto" }}>
+                  <Card.Img variant="top" src={media.data} alt={media.description} />
+                  <Card.Body>
+                    <Card.Text>{media.description}</Card.Text>
+                    {accessGranted && (
+                      <div>
+                        {editMode && editMediaId === media.id ? (
+                          <div>
+                            <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
+                            <Button onClick={uploadMedia} variant="success">
+                              <i className="bi bi-floppy-fill"></i> Save
+                            </Button>
+                            <Button onClick={cancelEditMode} variant="danger" style={{ marginLeft: "10px" }}>
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <div>
+                            <Button onClick={() => startEditMode(media)} variant="outline-primary">
+                              Edit Description
+                            </Button>
+                            <Button onClick={() => deleteMedia(media.id)} variant="outline-danger" style={{ marginLeft: "10px" }}>
+                              <i className="bi bi-trash-fill"></i>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Card.Body>
+                </Card>
+              )}
+              {media.type === "video" && (
+                <Card style={{ width: "20rem", margin: "auto" }}>
                   <video controls>
                     <source src={media.data} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
-                )}
-                {media.type === "audio" && (
+                  <Card.Body>
+                    <Card.Text>{media.description}</Card.Text>
+                    {accessGranted && (
+                      <div>
+                        {editMode && editMediaId === media.id ? (
+                          <div>
+                            <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
+                            <Button onClick={uploadMedia} variant="success">
+                              <i className="bi bi-floppy-fill"></i> Save
+                            </Button>
+                            <Button onClick={cancelEditMode} variant="danger" style={{ marginLeft: "10px" }}>
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <div>
+                            <Button onClick={() => startEditMode(media)} variant="outline-primary">
+                              Edit Description
+                            </Button>
+                            <Button onClick={() => deleteMedia(media.id)} variant="outline-danger" style={{ marginLeft: "10px" }}>
+                              <i className="bi bi-trash-fill"></i>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Card.Body>
+                </Card>
+              )}
+              {media.type === "audio" && (
+                <Card style={{ width: "20rem", margin: "auto", padding: "10px" }}>
                   <audio controls style={{ margin: "auto" }}>
                     <source src={media.data} type="audio/mp3" />
                     Your browser does not support the audio tag.
                   </audio>
-                )}
-                <Card.Body>
-                  <Card.Text>{media.description}</Card.Text>
-                </Card.Body>
-              </Card>
+                  <Card.Body>
+                    <Card.Text>{media.description}</Card.Text>
+                    {accessGranted && (
+                      <div>
+                        {editMode && editMediaId === media.id ? (
+                          <div>
+                            <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
+                            <Button onClick={uploadMedia} variant="success">
+                              <i className="bi bi-floppy-fill"></i> Save
+                            </Button>
+                            <Button onClick={cancelEditMode} variant="danger" style={{ marginLeft: "10px" }}>
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <div>
+                            <Button onClick={() => startEditMode(media)} variant="outline-primary">
+                              Edit Description
+                            </Button>
+                            <Button onClick={() => deleteMedia(media.id)} variant="outline-danger" style={{ marginLeft: "10px" }}>
+                              <i className="bi bi-trash-fill"></i>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Card.Body>
+                </Card>
+              )}
             </Col>
           ))}
         </Row>
-        {searchTerm === "" && (
-          <Row xs={1} md={3} className="g-4" style={{ margin: "auto" }}>
-            {mediaList.map((media) => (
-              <Col key={media.id} style={{ margin: "auto", padding: "20px" }}>
-                {media.type === "image" && (
-                  <Card style={{ width: "20rem", margin: "auto" }}>
-                    <Card.Img variant="top" src={media.data} alt={media.description} />
-                    <Card.Body>
-                      <Card.Text>{media.description}</Card.Text>
-                      {accessGranted && (
-                        <div>
-                          {editMode && editMediaId === media.id ? (
-                            <div>
-                              <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
-                              <Button onClick={uploadMedia} variant="success">
-                                <i className="bi bi-floppy-fill"></i> Save
-                              </Button>
-                              <Button onClick={cancelEditMode} variant="danger" style={{ marginLeft: "10px" }}>
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : (
-                            <div>
-                              <Button onClick={() => startEditMode(media)} variant="outline-primary">
-                                Edit Description
-                              </Button>
-                              <Button onClick={() => deleteMedia(media.id)} variant="outline-danger" style={{ marginLeft: "10px" }}>
-                                <i className="bi bi-trash-fill"></i>
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </Card.Body>
-                  </Card>
-                )}
-                {media.type === "video" && (
-                  <Card style={{ width: "20rem", margin: "auto" }}>
-                    <video controls>
-                      <source src={media.data} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                    <Card.Body>
-                      <Card.Text>{media.description}</Card.Text>
-                      {accessGranted && (
-                        <div>
-                          {editMode && editMediaId === media.id ? (
-                            <div>
-                              <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
-                              <Button onClick={uploadMedia} variant="success">
-                                <i className="bi bi-floppy-fill"></i> Save
-                              </Button>
-                              <Button onClick={cancelEditMode} variant="danger" style={{ marginLeft: "10px" }}>
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : (
-                            <div>
-                              <Button onClick={() => startEditMode(media)} variant="outline-primary">
-                                Edit Description
-                              </Button>
-                              <Button onClick={() => deleteMedia(media.id)} variant="outline-danger" style={{ marginLeft: "10px" }}>
-                                <i className="bi bi-trash-fill"></i>
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </Card.Body>
-                  </Card>
-                )}
-                {media.type === "audio" && (
-                  <Card style={{ width: "20rem", margin: "auto", padding: "10px" }}>
-                    <audio controls style={{ margin: "auto" }}>
-                      <source src={media.data} type="audio/mp3" />
-                      Your browser does not support the audio tag.
-                    </audio>
-                    <Card.Body>
-                      <Card.Text>{media.description}</Card.Text>
-                      {accessGranted && (
-                        <div>
-                          {editMode && editMediaId === media.id ? (
-                            <div>
-                              <Form.Control type="text" value={description} onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
-                              <Button onClick={uploadMedia} variant="success">
-                                <i className="bi bi-floppy-fill"></i> Save
-                              </Button>
-                              <Button onClick={cancelEditMode} variant="danger" style={{ marginLeft: "10px" }}>
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : (
-                            <div>
-                              <Button onClick={() => startEditMode(media)} variant="outline-primary">
-                                Edit Description
-                              </Button>
-                              <Button onClick={() => deleteMedia(media.id)} variant="outline-danger" style={{ marginLeft: "10px" }}>
-                                <i className="bi bi-trash-fill"></i>
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </Card.Body>
-                  </Card>
-                )}
-              </Col>
-            ))}
-          </Row>
-        )}
+      </Container>
+
+      <Container>
         <hr />
-        <Container>
-          <Row className="text-center">
-            <p>
-              ©2024 Copyright <strong className="text-danger">Medien de Azalea</strong>. All Rights Reserved
-            </p>
-          </Row>
-        </Container>
+        <Row className="text-center">
+          <p>
+            ©2024 Copyright <strong className="text-danger">Medien de Azalea</strong>. All Rights Reserved
+          </p>
+        </Row>
       </Container>
     </div>
   );
