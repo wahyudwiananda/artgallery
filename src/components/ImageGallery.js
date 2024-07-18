@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from "react";
-import db from "../db";
-import "./ImageGallery.css";
+import { createClient } from "@supabase/supabase-js";
 import { Button, Container, Navbar, Form, Offcanvas, Card, Row, Col } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "./ImageGallery.css";
+
+const supabaseUrl = "https://jipjrmvxowvhnitvgley.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppcGpybXZ4b3d2aG5pdHZnbGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjEzMDY3MjAsImV4cCI6MjAzNjg4MjcyMH0.GEGRYnZ0ZQSb5zIIC0sne-eM_xyBi5TKJNNJAGM1UF8";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const ImageGallery = () => {
-  const [mediaType, setMediaType] = useState("image");
   const [mediaList, setMediaList] = useState([]);
+  const [mediaType, setMediaType] = useState("image");
   const [newMedia, setNewMedia] = useState(null);
   const [description, setDescription] = useState("");
   const [editMode, setEditMode] = useState(false);
@@ -16,7 +20,6 @@ const ImageGallery = () => {
   const [show, setShow] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [searchEmpty, setSearchEmpty] = useState(false);
   const [selectedMediaType, setSelectedMediaType] = useState("all");
   const [selectedFilter, setSelectedFilter] = useState("all");
 
@@ -30,30 +33,37 @@ const ImageGallery = () => {
     try {
       if (term.trim() === "") {
         setSearchResults([]);
-        setSearchEmpty(false);
       } else {
-        const results = await db.media.filter((media) => media.description.toLowerCase().includes(term.toLowerCase())).toArray();
+        const { data, error } = await supabase.from("media_items").select("*").filter("description", "ilike", `%${term}%`);
 
-        setSearchResults(results);
-        setSearchEmpty(results.length === 0); // Set state searchEmpty jika hasil pencarian kosong
+        if (error) {
+          throw error;
+        }
+
+        setSearchResults(data);
       }
     } catch (error) {
-      console.error("Error searching media:", error);
+      console.error("Error searching media:", error.message);
+    }
+  };
+
+  const loadMedia = async () => {
+    try {
+      const { data, error } = await supabase.from("media_items").select("*");
+
+      if (error) {
+        throw error;
+      }
+
+      setMediaList(data);
+    } catch (error) {
+      console.error("Error loading media:", error.message);
     }
   };
 
   useEffect(() => {
     loadMedia();
   }, []);
-
-  const loadMedia = async () => {
-    try {
-      const allMedia = await db.media.toArray();
-      setMediaList(allMedia);
-    } catch (error) {
-      console.error("Error loading media:", error);
-    }
-  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -96,17 +106,31 @@ const ImageGallery = () => {
 
     try {
       if (editMode && editMediaId) {
-        await db.media.update(editMediaId, {
-          description: description,
-        });
+        const { error } = await supabase
+          .from("media_items")
+          .update({
+            description: description,
+          })
+          .eq("id", editMediaId);
+
+        if (error) {
+          throw error;
+        }
+
         setEditMode(false);
         setEditMediaId(null);
       } else {
-        await db.media.add({
-          type: mediaType,
-          data: newMedia.data,
-          description: description,
-        });
+        const { data, error } = await supabase.from("media_items").insert([
+          {
+            type: mediaType,
+            url: newMedia.data,
+            description: description,
+          },
+        ]);
+
+        if (error) {
+          throw error;
+        }
       }
 
       setNewMedia(null);
@@ -114,7 +138,7 @@ const ImageGallery = () => {
       loadMedia();
       alert("Upload Success!");
     } catch (error) {
-      console.error("Error uploading media:", error);
+      console.error("Error uploading media:", error.message);
     }
   };
 
@@ -134,15 +158,16 @@ const ImageGallery = () => {
 
   const deleteMedia = async (id) => {
     try {
-      await db.media.delete(id);
+      const { error } = await supabase.from("media_items").delete().eq("id", id);
+
+      if (error) {
+        throw error;
+      }
+
       loadMedia();
     } catch (error) {
-      console.error("Error deleting media:", error);
+      console.error("Error deleting media:", error.message);
     }
-  };
-
-  const reloadPage = () => {
-    window.location.reload();
   };
 
   const filterMediaByType = (type) => {
@@ -150,13 +175,11 @@ const ImageGallery = () => {
     setSelectedFilter(type);
   };
 
-  let displayedMedia = [];
+  const reloadPage = () => {
+    window.location.reload();
+  };
 
-  if (searchTerm !== "") {
-    displayedMedia = searchResults.filter((media) => selectedMediaType === "all" || media.type === selectedMediaType);
-  } else {
-    displayedMedia = mediaList.filter((media) => selectedMediaType === "all" || media.type === selectedMediaType);
-  }
+  const displayedMedia = searchTerm !== "" ? searchResults : mediaList.filter((media) => selectedMediaType === "all" || media.type === selectedMediaType);
 
   return (
     <div>
@@ -193,7 +216,7 @@ const ImageGallery = () => {
                       <option value="video">Video</option>
                       <option value="audio">Audio</option>
                     </Form.Select>
-                    <Form.Control type="file" accept={mediaType} onChange={handleFileChange} className="mb-2" />
+                    <Form.Control type="file" accept={mediaType === "image" ? "image/*" : mediaType === "video" ? "video/*" : "audio/*"} onChange={handleFileChange} className="mb-2" />
                     <Form.Control type="text" onChange={handleDescriptionChange} placeholder="Enter description" className="mb-2" />
                     <Button onClick={uploadMedia}>Upload Media</Button>
                     <Button onClick={reloadPage} variant="danger" style={{ marginLeft: "10px" }}>
@@ -225,17 +248,17 @@ const ImageGallery = () => {
           Video
         </Button>
         <Button className="me-2" variant={selectedFilter === "audio" ? "danger" : "outline-danger"} onClick={() => filterMediaByType("audio")}>
-          Music
+          Audio
         </Button>
       </Container>
       <Container>
-        {searchTerm !== "" && <h4 className="text-center mb-4">{searchEmpty ? "Sorry, we don't have that..." : "Search Results:"}</h4>}
+        <h4>{searchTerm ? `Displaying results for "${searchTerm}": ` : ""}</h4>
         <Row xs={1} md={3} className="g-4" style={{ margin: "auto" }}>
           {displayedMedia.map((media) => (
             <Col data-aos="fade-up" key={media.id} style={{ margin: "auto", padding: "20px" }}>
               {media.type === "image" && (
                 <Card style={{ width: "20rem", margin: "auto" }}>
-                  <Card.Img variant="top" src={media.data} alt={media.description} />
+                  <Card.Img variant="top" src={media.url} alt={media.description} />
                   <Card.Body>
                     <Card.Text>{media.description}</Card.Text>
                     {accessGranted && (
@@ -268,7 +291,7 @@ const ImageGallery = () => {
               {media.type === "video" && (
                 <Card style={{ width: "20rem", margin: "auto" }}>
                   <video controls>
-                    <source src={media.data} type="video/mp4" />
+                    <source src={media.url} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
                   <Card.Body>
@@ -303,7 +326,7 @@ const ImageGallery = () => {
               {media.type === "audio" && (
                 <Card style={{ width: "20rem", margin: "auto", padding: "10px" }}>
                   <audio controls style={{ margin: "auto" }}>
-                    <source src={media.data} type="audio/mp3" />
+                    <source src={media.url} type="audio/mp3" />
                     Your browser does not support the audio tag.
                   </audio>
                   <Card.Body>
