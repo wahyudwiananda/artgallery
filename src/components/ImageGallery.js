@@ -5,7 +5,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./ImageGallery.css";
 
 const supabaseUrl = "https://jipjrmvxowvhnitvgley.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppcGpybXZ4b3d2aG5pdHZnbGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjEzMDY3MjAsImV4cCI6MjAzNjg4MjcyMH0.GEGRYnZ0ZQSb5zIIC0sne-eM_xyBi5TKJNNJAGM1UF8";
+const supabaseKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppcGpybXZ4b3d2aG5pdHZnbGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyMTMwNjcyMCwiZXhwIjoyMDM2ODgyNzIwfQ.X7J-qlG0ty9enf3MCLueAdiZi7nzC_H4hwUiwYph3xk";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const ImageGallery = () => {
@@ -68,16 +69,12 @@ const ImageGallery = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const mediaData = reader.result;
-        setNewMedia({
-          type: mediaType,
-          data: mediaData,
-          description: description,
-        });
-      };
-      reader.readAsDataURL(file);
+      // Simpan informasi file untuk digunakan saat upload
+      setNewMedia({
+        file: file,
+        type: mediaType,
+        description: description,
+      });
     }
   };
 
@@ -102,10 +99,9 @@ const ImageGallery = () => {
   };
 
   const uploadMedia = async () => {
-    if (!description) return;
-
     try {
       if (editMode && editMediaId) {
+        // Update existing media description
         const { error } = await supabase
           .from("media_items")
           .update({
@@ -119,24 +115,39 @@ const ImageGallery = () => {
 
         setEditMode(false);
         setEditMediaId(null);
+        setDescription("");
+        loadMedia();
+        alert("Description updated successfully!");
       } else {
-        const { data, error } = await supabase.from("media_items").insert([
+        // Upload new media
+        if (!description || !newMedia) return;
+
+        const { error: uploadError } = await supabase.storage.from("ArtGallery").upload(newMedia.file.name, newMedia.file, {
+          contentType: newMedia.file.type,
+        });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { error } = await supabase.from("media_items").insert([
           {
-            type: mediaType,
-            url: newMedia.data,
+            type: newMedia.type,
+            url: `https://jipjrmvxowvhnitvgley.supabase.co/storage/v1/object/public/ArtGallery/${newMedia.file.name}`,
             description: description,
+            original_filename: newMedia.file.name,
           },
         ]);
 
         if (error) {
           throw error;
         }
-      }
 
-      setNewMedia(null);
-      setDescription("");
-      loadMedia();
-      alert("Upload Success!");
+        setNewMedia(null);
+        setDescription("");
+        loadMedia();
+        alert("Upload Success!");
+      }
     } catch (error) {
       console.error("Error uploading media:", error.message);
     }
