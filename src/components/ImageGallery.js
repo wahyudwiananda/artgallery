@@ -69,7 +69,6 @@ const ImageGallery = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Simpan informasi file untuk digunakan saat upload
       setNewMedia({
         file: file,
         type: mediaType,
@@ -101,7 +100,6 @@ const ImageGallery = () => {
   const uploadMedia = async () => {
     try {
       if (editMode && editMediaId) {
-        // Update existing media description
         const { error } = await supabase
           .from("media_items")
           .update({
@@ -119,7 +117,6 @@ const ImageGallery = () => {
         loadMedia();
         alert("Description updated successfully!");
       } else {
-        // Upload new media
         if (!description || !newMedia) return;
 
         const { error: uploadError } = await supabase.storage.from("ArtGallery").upload(newMedia.file.name, newMedia.file, {
